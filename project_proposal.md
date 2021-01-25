@@ -15,10 +15,10 @@ Suppliers/Vendors: Information on the companies that distribute the products.
 ### What does your database schema look like?
 The database schema consists of 4 tables: Users, Products, Vendors, and Inventory, as outlined below:
 
-<img src="https://raw.githubusercontent.com/davehdez9/restaurant-inventory/main/restaurant_inventory_schema.png" />
+<img src="https://raw.githubusercontent.com/davehdez9/restaurant-inventory/main/inventory_schema_capstone.png" />
 
 ### What kind of issues might you run into with your API?
-N/A, not using an external API.
+It's a free API, but the only small problem would be that it only allows 10 requests per minute.
 
 ### Is there any sensitive information I need to secure?
 Yes, users will have login information that will need to be secured.
