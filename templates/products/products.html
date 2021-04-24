@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Products</h1>
+
+
+<a href="/products/new" class="btn btn-primary btn-lg active" role="button" aria-pressed="true">Add Product</a>
+<a href="/homePage" class="btn btn-danger btn-lg active" role="button" aria-pressed="true">Go Back</a>
+<!-- <button type="button" class="btn btn-warning">Update Product</button>
+<button type="button" class="btn btn-danger">Delete Product</button>
+<button type="button" class="btn btn-info">View All Products</button>
+<button type="button" class="btn btn-secondary">Search Products By Name</button> -->
+
+<table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Product Name</th>
+        <th scope="col">Description</th>
+        <th scope="col">Unit measure</th>
+        <th scope="col">Amount per Stock</th>
+        <th scope="col">price</th>
+      </tr>
+    </thead>
+    <tbody>
+        {%for p in products%}
+        <tr>
+            <td>{{p.product_name}} 
+              <a class="btn btn-success btn-sm" href="/products/{{p.id}}/edit">Edit</a>
+              <!-- <a class="btn btn-danger btn-sm" href="#">Delete</a> -->
+              <form method="POST"
+                    action="/products/{{ p.id }}/delete">
+                <button class="btn btn-danger">Delete</button>
+              </form>
+            </td>
+            <td>{{p.product_description}}</td>
+            <td>{{p.unit_measurement}}</td>
+            <td>{{p.package_amount}}</td>
+            <td>{{p.price_per_package}}</td>
+        </tr>
+        {%endfor%}
+    </tbody>
+  </table>
+{% endblock %}

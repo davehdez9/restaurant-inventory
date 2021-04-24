@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Vendors</h1>
+
+
+<a href="/vendors/new" class="btn btn-primary btn-lg active" role="button" aria-pressed="true">Add Vendor</a>
+<a href="/homePage" class="btn btn-danger btn-lg active" role="button" aria-pressed="true">Go Back</a>
+<!-- <button type="button" class="btn btn-warning">Update Product</button>
+<button type="button" class="btn btn-danger">Delete Product</button>
+<button type="button" class="btn btn-info">View All Products</button>
+<button type="button" class="btn btn-secondary">Search Products By Name</button> -->
+
+<table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Vendor Name</th>
+        <th scope="col">Description</th>
+        <th scope="col">Contact Name</th>
+        <th scope="col">Contact Email</th>
+        <th scope="col">Website</th>
+        <th scope="col">Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+        {%for v in vendors%}
+        <tr>
+            <td>{{v.vendor_name}} 
+              <a class="btn btn-success btn-sm" href="/vendors/{{v.id}}/edit">Edit</a>
+              <!-- <a class="btn btn-danger btn-sm" href="#">Delete</a> -->
+              <form method="POST"
+                    action="/vendors/{{ v.id }}/delete">
+                <button class="btn btn-danger">Delete</button>
+              </form>
+            </td>
+            <td>{{v.vendor_description}}</td>
+            <td>{{v.contact_name}}</td>
+            <td>{{v.contact_email}}</td>
+            <td>{{v.vendor_website}}</td>
+            <td>{{v.vendor_notes}}</td>
+        </tr>
+        {%endfor%}
+    </tbody>
+  </table>
+{% endblock %}
