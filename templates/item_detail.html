@@ -1,0 +1,33 @@
+{% extends "base2.html" %}
+{% block title %}List of Items{% endblock %}
+
+{% block content %}
+    <div class="jumbotron">
+        <h1>Items Details</h1>
+        
+        <a href="/issue_items/{{item.id}}/"><div class="btn btn-danger">ISSUE THIS ITEM</div></a>
+        <a href="/receive_items/{{item.id}}/"><div class="btn btn-primary">RECEIVE THIS ITEM</div></a>
+        <br>
+
+        <div class="display_table">
+            <table class="table table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>ITEM NAME</th>
+                        <th>QUANTITY IN STORE</th>
+                        <th>LAST UPDATED</th>
+                        <th>REORDER LEVEL</th>
+                    </tr>
+                </thead>
+                <tr>
+                    <td>{{item.product_name}}</td>
+                    <td>{{item.quantity}}</td>
+                    <td>{{item.last_updated}}</td>
+                    <td>{{item.reorder_levels}}</td>
+                </tr>
+                
+            </table>
+        </div>
+        
+    </div>
+{% endblock %}

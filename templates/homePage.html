@@ -1,35 +1,11 @@
-{% extends "base.html" %}
+{% extends "base2.html" %}
 
 {% block content %}
-<h1>Welcome</h1>
 
-
-<a href="/products" class="btn btn-primary btn-lg active" role="button" aria-pressed="true">Products</a>
-<a href="/vendors" class="btn btn-secondary btn-lg active" role="button" aria-pressed="true">Vendors</a>
-<!-- <button type="button" class="btn btn-warning">Update Product</button>
-<button type="button" class="btn btn-danger">Delete Product</button>
-<button type="button" class="btn btn-info">View All Products</button>
-<button type="button" class="btn btn-secondary">Search Products By Name</button> -->
-
-<table class="table">
-    <thead>
-      <tr>
-        <th scope="col">Product id</th>
-        <th scope="col">Product</th>
-        <th scope="col">Vendor</th>
-        <th scope="col">Amount Stock</th>
-        <th scope="col">Unit_measure</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- <tr>
-        <th scope="row">1</th>
-        <td>Cotto</td>
-        <td>AceEndico</td>
-        <td>2</td>
-        <td>kg</td>
-      </tr> -->
-    </tbody>
-  </table>
+  <div class="jumbotron">
+    <h1>Welcome</h1>
+    <p class="lead">This example is a quick exercise to illustrate how fixed to top navbar works. As you scroll, it will remain fixed to the top of your browser’s viewport.</p>
+    <a class="btn btn-lg btn-primary" href="/docs/4.4/components/navbar/" role="button">View navbar docs &raquo;</a>
+  </div>
 
 {% endblock %}

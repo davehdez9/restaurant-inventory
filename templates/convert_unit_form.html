@@ -1,0 +1,24 @@
+{% extends "base2.html" %}
+{% block title %}{% endblock %}
+
+{% block content %}
+<div class="jumbotron">
+    <!-- <h1 class="display-2">Add Item</h1> -->
+    {% if answer %}
+    <h3>{{answer}}</h3>
+    {% endif %}
+
+    <form class="navbar-form navbar-right" action="/convert_unit">
+        <input class="form-control" type="text" name="ingredient" placeholder="Ingredient Name">
+        <input class="form-control" type="text" name="sourceAmount" placeholder="Source Amount">
+        <input class="form-control" type="text" name="sourceUnit" placeholder="Source Unit">
+        <input class="form-control" type="text" name="targetUnit" placeholder="Target Unit">
+        <!-- <input type="checkbox" name="csv" value="csv">
+        <label for="csv"> Export to CSV</label><br> -->
+        <button class="btn btn-success">Convert</button>
+    </form>
+    
+</div>
+
+
+{% endblock %}

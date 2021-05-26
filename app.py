@@ -1,13 +1,23 @@
 import os
+import logging
+import requests
+import json
 
-from flask import Flask, request, render_template, redirect, flash, session, jsonify, g
+from flask import Flask, request, render_template, redirect, flash, session, jsonify, g, url_for
+# from secrets import API_KEY
+# from flask_whooshalchemy import whoosh_index
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
-from models import db, connect_db, Vendor, Product, User, Inventory
-from forms import SignUpForm, LoginForm, ProductForm, VendorForm
+from models import db, connect_db, User, Stock
+from forms import SignUpForm, LoginForm, ProductForm, VendorForm, StockForm, StockUpdateForm, IssueForm, ReceiveForm, ReorderLevelForm, ConvertUnitForm
+
+log = logging.getLogger("my-logger")
+log.info("Hello, world")
 
 CURR_USER_KEY = "curr_user"
+API_BASE_URL = 'https://api.spoonacular.com/recipes/convert?'
+API_KEY = '087fcaf2057b4da69bd7067c566617ed'
 
 # APP CONFIGURATIONS -> 
 app = Flask(__name__)
@@ -18,10 +28,12 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True
 app.config['SECRET_KEY'] = 'my-secret-key'
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
+# app.config['WHOOSH_BASE'] = 'whoosh'
 
 debug = DebugToolbarExtension(app)
 
 connect_db(app)
+# whoosh_index(app, Stock)
 
 ######################################################################
 # User signup/login/logout
@@ -83,7 +95,7 @@ def sign_up():
 
         do_login(user)
         
-        return redirect('/homePage')
+        return redirect('/home')
 
     else:
         return render_template('signUp.html', form=form)
@@ -102,7 +114,7 @@ def login_user():
         if user:
             do_login(user)
             flash("Welcome Back!", "success")
-            return redirect('/homePage')
+            return redirect('/home')
         
         flash("invalid credentials", 'danger')
         
@@ -120,20 +132,164 @@ def logout_user():
     return redirect('/')
 
 # ----- Home page Route
-@app.route('/homePage')
+@app.route('/home')
 def home_page():
     if g.user:
         return render_template("homePage.html")
     else: 
         redirect('/')
 
-# ---------- Inventory Routes
-# GET /Inventory - Get all Inventories
-# GET /Inventory/[id] - Get inventory
-# POST /Inventory -  Create inventory
-# PUT/PATCH /Inventory/[id] - Update inventory
-# DELETE /Inventory/[id] - Delete Inventory 
+# ----------------------Stock Routes
+@app.route('/items', methods=['GET', 'POST'])
+def list_items():
 
+    search_category = request.args.get('c')
+    search_product = request.args.get('p')
+    # all_items = Stock.query.all()
+    
+    if search_category or search_product:
+        search = Stock.query.filter(Stock.category.like(f"%{search_category}%"), Stock.product_name.like(f"%{search_product}%")).all()
+    else:
+        search = Stock.query.all()
+
+    return render_template('list_items.html', search=search)
+
+@app.route('/add_item', methods=['GET', 'POST'])
+def add_item():
+    form = StockForm()
+
+    if form.validate_on_submit():
+        category = form.category.data
+        product_name = form.product_name.data
+        quantity = form.quantity.data
+
+        
+
+        new_item = Stock(
+            category=category,
+            product_name=product_name,
+            quantity=quantity,
+        )
+        db.session.add(new_item)
+        flash("Added Successfully", "success")
+        db.session.commit()
+        return redirect('/items')
+    else:
+        return render_template('add_items.html', form=form)
+
+@app.route('/update_item/<int:id>/', methods=["GET", "POST"])
+def update_item(id):
+    query = Stock.query.get_or_404(id)
+    form = StockUpdateForm(obj=query)
+
+    if form.validate_on_submit():
+        query.category = form.category.data
+        query.product_name = form.product_name.data
+        query.quantity = form.quantity.data
+        flash("Updated Successfully", "success")
+
+        db.session.commit()
+        return redirect('/items')
+    else:
+        return render_template('add_items.html', form=form)
+
+@app.route('/delete_items/<int:id>/', methods=['GET', 'POST'])
+def delete_items(id):
+    query = Stock.query.get_or_404(id)
+
+    if request.method == 'POST':
+        if query:
+            db.session.delete(query)
+            flash("Deleted Successfully", "success")
+            db.session.commit()
+            return redirect('/items')
+    
+    return render_template('delete_items.html')
+
+@app.route('/item_details/<int:id>/')
+def item_details(id):
+    item = Stock.query.get_or_404(id)
+    return render_template('item_detail.html', item=item)
+
+@app.route('/issue_items/<int:id>/', methods=['GET', 'POST'])
+def issue_items(id):
+    item = Stock.query.get_or_404(id)
+    form = IssueForm(obj=item)
+
+    if form.validate_on_submit():
+        if item:
+            item.issue_quantity = form.issue_quantity.data
+            db.session.commit()
+         
+            item.quantity -= item.issue_quantity
+            flash(f"Issued Successfully. {item.quantity} {item.product_name}s now left in Store", 'success')
+            db.session.commit()
+            return redirect(url_for('item_details', id=id))
+
+    return render_template('add_items.html', item=item, form=form)
+
+@app.route('/receive_items/<int:id>/', methods=['GET', 'POST'])
+def receive_items(id):
+    item = Stock.query.get_or_404(id)
+    form = ReceiveForm(obj=item)
+
+    if form.validate_on_submit():
+        if item:
+            item.receive_quantity = form.receive_quantity.data
+            db.session.commit()
+
+            item.quantity += item.receive_quantity
+            flash(f"Received Successfully. {item.quantity} {item.product_name}s now in Store", 'success')
+            db.session.commit()
+            return redirect(url_for('item_details', id=id))
+
+    return render_template('add_items.html', item=item, form=form)           
+        
+@app.route('/reorder_level/<int:id>/', methods=['GET', 'POST'])
+def reorder_level(id):
+    item = Stock.query.get_or_404(id)
+    form = ReorderLevelForm(obj=item)
+
+    if form.validate_on_submit():
+        if item:
+            item.reorder_levels = form.reorder_level.data
+            db.session.commit()
+            flash(f"Reorder Level for {item.product_name} is update to {item.reorder_levels}")
+            return redirect('/items')
+    
+    return render_template('add_items.html', form=form, item=item)
+
+@app.route('/convert')
+def convert():
+    return render_template('convert_unit_form.html')
+
+@app.route('/convert_unit')
+def convert_unit_form():
+    ingredient = request.args.get('ingredient')
+    source_amount = request.args.get('sourceAmount')
+    source_unit = request.args.get('sourceUnit')
+    target_unit = request.args.get('targetUnit')
+
+    response = requests.get(f"{API_BASE_URL}", params={'apiKey':API_KEY, 
+                                                        'ingredientName':ingredient, 
+                                                        'sourceAmount':source_amount, 
+                                                        'sourceUnit':source_unit, 
+                                                        'targetUnit':target_unit}
+    )
+
+    data = response.json()
+    result = data['answer']
+
+    return render_template("convert_unit_form.html", answer=result)
+
+
+
+
+
+
+
+
+    
 # ---------- Products Routes
 # GET /products - Get all products
 @app.route('/products')
