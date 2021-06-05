@@ -26,6 +26,7 @@
                             <th>CATEGORY</th>
                             <th>PRODUCT NAME</th>
                             <th>QUANTITY IN STORE</th>
+                            <th>UNIT MEASUREMENT</th>
                             <th>REORDER LEVEL</th>
                             <!-- <th>TIMESTAMP</th> -->
                             <th>LAST UPDATED</th>
@@ -46,6 +47,7 @@
                                     <a href="/item_details/{{c.id}}/">{{c.quantity}}</a>
                                 {% endif %}
                             </td>
+                            <td>{{c.unit_measurement}}</td>
                             <!-- <td><a href="/item_details/{{c.id}}/">{{c.quantity}}</a></td> -->
                             <td><a href="/reorder_level/{{c.id}}">{{c.reorder_levels}}</a></td>
                             <!-- <td>{{c.timestamp}}</td> -->
