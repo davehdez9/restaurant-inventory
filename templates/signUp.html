@@ -1,24 +1,29 @@
 {% extends "base2.html" %}
 
 {% block content %}
-<h1 class="display-1">Sign Up</h1>
-<p class="lead">Register below to join to the app </p>
+<div class="d-sm-flex align-items-center justify-content-between">
+    <div class="signup-form">
+        <h2 class="form-title">Sign Up</h2>
+        <p class="lead">Create an account</p>
 
-<form method="POST">
-    {{ form.hidden_tag() }}
+        <form method="POST">
+            {{ form.hidden_tag() }}
 
-    {% for field in form
-        if field.widget.input_type != 'hidden' %}
-    <p>
-        {{ field.label }}
-        {{ field(class_="form-control") }}
+            {% for field in form
+                if field.widget.input_type != 'hidden' %}
+            <div class="mb-3">
+                {{ field.label }}
+                {{ field(class_="form-control") }}
 
-        {% for error in field.errors %}
-        <span class="form-text text-danger">{{ error }}</span>
-        {% endfor %}
-    </p>
-    {% endfor %}
-
-    <button class="btn btn-success" type="submit">Sign Up</button>
-</form>
+                {% for error in field.errors %}
+                <span class="form-text text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
+            {% endfor %}
+            
+            <button class="btn btn-success" type="submit">Sign Up</button>
+        </form>
+    </div>
+    <img class="img-fluid w-50 d-none d-sm-block" src="../static/img/inv/illustration-inventory-management.jpg" alt="">
+</div>
 {% endblock %}
