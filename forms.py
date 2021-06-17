@@ -12,7 +12,7 @@ class SignUpForm(FlaskForm):
     password = PasswordField("Password", validators=[Length(min=6)])
     
 class LoginForm(FlaskForm):
-    username = StringField("username", validators=[DataRequired()])
+    username = StringField("username", validators=[DataRequired()], render_kw={"placeholder": "frodo123"})
     password = PasswordField("password", validators=[Length(min=6)])
 
 class UserEditForm(FlaskForm):
