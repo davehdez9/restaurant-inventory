@@ -1,11 +1,14 @@
+from logging import error
 import os
+from flask.wrappers import Response
 import requests
 
 from flask import Flask, request, render_template, redirect, flash, session, g, url_for
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
-from models import db, connect_db, User, Stock
-from forms import SignUpForm, LoginForm, StockForm, StockUpdateForm, IssueForm, ReceiveForm, ReorderLevelForm, UserEditForm
+from sqlalchemy import exc
+from models import db, connect_db, User, Stock, UnitConvertion
+from forms import SignUpForm, LoginForm, StockForm, StockUpdateForm, IssueForm, ReceiveForm,UserEditForm, AddConvertion
 from secrets import API_KEY
 
 CURR_USER_KEY = "curr_user"
@@ -114,11 +117,11 @@ def login_user():
 def logout_user():
     """Handle logout of users"""
     do_logout()
-    flash('Your are now Logout', 'success')
+    flash('You are now logged out', 'success')
     return redirect('/login')
 
 # User Profile Route 
-@app.route('/users/profile', methods=["GET", "POST"]) 
+@app.route('/user/profile', methods=["GET", "POST"]) 
 def profile():
     """Update profile for current user"""
 
@@ -173,52 +176,82 @@ def home_page():
 @app.route('/items', methods=['GET', 'POST'])
 def list_items():
 
+
+    if not g.user:
+        flash("Access unauthorized", "danger")
+        return redirect("/")
+    
     search_category = request.args.get('c')
     search_product = request.args.get('p')
     # all_items = Stock.query.all()
+
+    user_inventory = Stock.query.filter(Stock.user_id == g.user.id)
     
     if search_category or search_product:
-        search = Stock.query.filter(Stock.category.like(f"%{search_category}%"), Stock.product_name.like(f"%{search_product}%")).all()
+        inventory_display = user_inventory.filter(Stock.category.like(f"%{search_category}%"), Stock.product_name.like(f"%{search_product}%")).all()
     else:
-        search = Stock.query.all()
+        inventory_display = user_inventory.all()
 
-    return render_template('list_items.html', search=search)
+    return render_template('list_items.html', inventory_display=inventory_display)
 
 @app.route('/add_item', methods=['GET', 'POST'])
 def add_item():
+
+    if not g.user:
+        flash("Access unauthorized", "danger")
+        return redirect("/")
+
     form = StockForm()
+
+    # [ x] -> CHECK
+    # unit = db.session.query(UnitConvertion.unit_abbreviation, UnitConvertion.unit_name).one()
+    # form.unit_abbreviation.choices = unit
 
     if form.validate_on_submit():
         category = form.category.data
         product_name = form.product_name.data
         quantity = form.quantity.data
-        unit_measurement = form.unit_measurement.data
-
-        
+        unit_abbreviation = form.unit_abbreviation.data
+        reorder_level = form.reorder_level.data
 
         new_item = Stock(
             category=category,
             product_name=product_name,
             quantity=quantity,
-            unit_measurement=unit_measurement
+            reorder_levels=reorder_level,
+            user_id= g.user.id,
+            unit_abbreviation=unit_abbreviation
         )
+
         db.session.add(new_item)
-        flash("Added Successfully", "success")
+        
         db.session.commit()
+        flash("Added Successfully", "success")
         return redirect('/items')
+       
     else:
         return render_template('add_items.html', form=form)
 
 @app.route('/update_item/<int:id>/', methods=["GET", "POST"])
 def update_item(id):
-    query = Stock.query.get_or_404(id)
-    form = StockUpdateForm(obj=query)
+
+    if not g.user:
+        flash("Access unauthorized", "danger")
+        return redirect("/")
+
+    stock = Stock.query.get_or_404(id)
+    form = StockUpdateForm(obj=stock)
+
+    # CHECK
+    # unit = db.session.query(UnitConvertion.unit_abbreviation, UnitConvertion.unit_name).all()
+    # form.unit_abbreviation.choices = unit
 
     if form.validate_on_submit():
-        query.category = form.category.data
-        query.product_name = form.product_name.data
-        query.quantity = form.quantity.data
-        query.unit_measurement = form.unit_measurement.data
+        stock.category = form.category.data
+        stock.product_name = form.product_name.data
+        stock.quantity = form.quantity.data
+        stock.unit_abbreviation = form.unit_abbreviation.data
+        stock.reorder_levels = form.reorder_level.data
         flash("Updated Successfully", "success")
 
         db.session.commit()
@@ -228,6 +261,11 @@ def update_item(id):
 
 @app.route('/delete_items/<int:id>/', methods=['GET', 'POST'])
 def delete_items(id):
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
     query = Stock.query.get_or_404(id)
 
     if request.method == 'POST':
@@ -241,11 +279,19 @@ def delete_items(id):
 
 @app.route('/item_details/<int:id>/')
 def item_details(id):
+    if CURR_USER_KEY not in session:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
     item = Stock.query.get_or_404(id)
     return render_template('item_detail.html', item=item)
 
 @app.route('/issue_items/<int:id>/', methods=['GET', 'POST'])
 def issue_items(id):
+    if CURR_USER_KEY not in session:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
     item = Stock.query.get_or_404(id)
     form = IssueForm(obj=item)
 
@@ -263,6 +309,10 @@ def issue_items(id):
 
 @app.route('/receive_items/<int:id>/', methods=['GET', 'POST'])
 def receive_items(id):
+    if CURR_USER_KEY not in session:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
     item = Stock.query.get_or_404(id)
     form = ReceiveForm(obj=item)
 
@@ -277,27 +327,22 @@ def receive_items(id):
             return redirect(url_for('item_details', id=id))
 
     return render_template('add_items.html', item=item, form=form)           
-        
-@app.route('/reorder_level/<int:id>/', methods=['GET', 'POST'])
-def reorder_level(id):
-    item = Stock.query.get_or_404(id)
-    form = ReorderLevelForm(obj=item)
 
-    if form.validate_on_submit():
-        if item:
-            item.reorder_levels = form.reorder_level.data
-            db.session.commit()
-            flash(f"Reorder Level for {item.product_name} is update to {item.reorder_levels}", "success")
-            return redirect('/items')
-    
-    return render_template('add_items.html', form=form, item=item)
+@app.route('/convert')
+def convert():
+    return render_template('convert_unit_form.html')
 
-@app.route('/convert_unit')
+@app.route('/convert_unit', methods=['GET', 'POST'])
 def convert_unit_form():
-    ingredient = request.args.get('ingredient')
-    source_amount = request.args.get('sourceAmount')
-    source_unit = request.args.get('sourceUnit')
-    target_unit = request.args.get('targetUnit')
+    if CURR_USER_KEY not in session:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+
+    ingredient = request.args.get('product')
+    source_amount = request.args.get('quantity')
+    source_unit = request.args.get('convertFrom')
+    target_unit = request.args.get('convertTo')
 
     response = requests.get(f"{API_BASE_URL}", params={'apiKey':API_KEY, 
                                                         'ingredientName':ingredient, 
@@ -310,3 +355,41 @@ def convert_unit_form():
     result = data.get('answer')
 
     return render_template("convert_unit_form.html", result=result)
+    # return redirect(url_for('convert'), result=result)
+
+@app.route('/add_convertion', methods=['GET', 'POST'])
+def add_convertion():
+
+    if not g.user:
+        flash("Access unauthorized", "danger")
+        return redirect("/")
+
+    if request.method == 'POST':
+        unit_name = request.form["name"]
+        unit_abbreviation = request.form["abbreviation"]
+
+        data = UnitConvertion(unit_abbreviation=unit_abbreviation, unit_name=unit_name )
+        db.session.add(data)
+        db.session.commit()
+        flash("Added Successfully", "success")
+        return redirect(url_for('convert'))
+
+# @app.route('/add_convertion', methods = ['GET', 'POST'])
+# def add_convertion():
+#     if not g.user:
+#         flash("Access unauthorized", "danger")
+#         return redirect("/")
+
+#     form = AddConvertion()
+
+#     if form.validate_on_submit():
+#         unit_name = form.unit_name.data
+#         unit_abbreviation = form.unit_abbreviation.data
+
+#         data = UnitConvertion(unit_name=unit_name, unit_abbreviation=unit_abbreviation)
+#         db.session.add(data)
+#         flash("Added Successfully", 'success')
+#         db.session.commit()
+#         return redirect(url_for('convert'))
+#     else:
+#         return render_template(convert_unit_form, form=form)

@@ -2,23 +2,67 @@
 {% block title %}{% endblock %}
 
 {% block content %}
-<div class="jumbotron">
-    <!-- <h1 class="display-2">Add Item</h1> -->
-    {% if result %}
-    <h3>{{result}}</h3>
-    {% endif %}
 
-    <form class="navbar-form navbar-right" action="/convert_unit">
-        <input class="form-control" type="text" name="ingredient" placeholder="Ingredient Name">
-        <input class="form-control" type="text" name="sourceAmount" placeholder="Source Amount">
-        <input class="form-control" type="text" name="sourceUnit" placeholder="Source Unit">
-        <input class="form-control" type="text" name="targetUnit" placeholder="Target Unit">
-        <!-- <input type="checkbox" name="csv" value="csv">
-        <label for="csv"> Export to CSV</label><br> -->
-        <button class="btn btn-success">Convert</button>
-    </form>
-    
+<div class="modal fade" id="add" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Add New Conversion</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form action="/add_convertion" method="POST">
+          <div class="mb-3">
+            <label for="formGroupExampleInput" class="form-label">Unit Name</label>
+            <input type="text" class="form-control" name="name" id="formGroupExampleInput" placeholder="ie kilograms">
+          </div>
+          <div class="mb-3">
+            <label for="formGroupExampleInput2" class="form-label">Unit Abbreviation</label>
+            <input type="text" class="form-control" name="abbreviation" id="formGroupExampleInput2" placeholder="ie kg">
+          </div>
+          <button type="submit" class="btn btn-primary">Add</button>
+        </form>
+        
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+      </div>
+    </div>
+  </div>
 </div>
 
 
+<div class="jumbotron">
+  <h1>Unit Convertion</h1>  
+  
+  <div class="row">
+    <div class="col-md-12 text-right">
+      <button class="btn btn-success badge rounded-pill bg-success" data-bs-toggle="modal" data-bs-target="#add" style="width:80px;">Add</button>
+    </div>
+  </div>
+  <br>
+
+  {% if result %}
+  <h3>{{result}}</h3>
+  {% endif %}
+  
+  <form class="navbar-form navbar-right" action="/convert_unit">
+
+    <label class="fw-bold" for="product">Product Name:</label>
+    <input class="form-control" type="text" name="product" placeholder="Ingredient Name" id="product">
+    
+    <label class="/fw-bold for="quantity">Quantity:</label>
+    <input class="form-control" type="text" name="quantity" placeholder="Quantity (Example: 10)" id="quantity">
+
+    <label class="fw-bold" for="convertFrom">Convert From:</label>
+    <input class="form-control" type="text" name="convertFrom" placeholder="Unit (Example: LBS)" id="convertFrom">
+    
+    <label class="fw-bold" for="convertTo">Convert To:</label>
+    <input class="form-control" type="text" name="convertTo" placeholder="Unit (Example: KG)" id="convertTo">
+  
+    <button class="btn btn-success">Convert</button>
+    <a href="/add_unit_convertion">Add New Unit</a>
+  </form> 
+</div>
 {% endblock %}

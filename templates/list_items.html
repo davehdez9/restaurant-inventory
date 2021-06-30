@@ -1,62 +1,75 @@
 {% extends "base2.html" %}
-{% block title %}List of Items{% endblock %}
+<!-- {% block title %}List of Items{% endblock %} -->
 
 {% block content %}
     <div class="jumbotron">
-        <h1>List of Items</h1>
-        
-        <form class="navbar-form navbar-right" action="/items">
-            <input name="c" class="form-control" placeholder="Category" id="search">
-            <input name="p" class="form-control" placeholder="Product" id="search">
-            <!-- <input type="checkbox" name="csv" value="csv">
-            <label for="csv"> Export to CSV</label><br> -->
-            <button class="btn btn-default">
-              <span class="fa fa-search"></span>
-            </button>
-        </form>
-
-        {% if search|length == 0  %}
-            <h3>Sorry, not category found!</h3>
-        {% else %}
-            <div class="display_table">
-                <table class="table table-striped">
-                    <thead class="thead-dark">
-                        <tr>
-                            <!-- <th>COUNT</th> -->
-                            <th>CATEGORY</th>
-                            <th>PRODUCT NAME</th>
-                            <th>QUANTITY IN STORE</th>
-                            <th>UNIT MEASUREMENT</th>
-                            <th>REORDER LEVEL</th>
-                            <!-- <th>TIMESTAMP</th> -->
-                            <th>LAST UPDATED</th>
-                            <th>DELETE</th>
-                        </tr>
-                    </thead>
-                    {%for c in search%}
-                        <tr>
-                            <!-- <td>{{c.id}}</td> -->
-                            <td>{{c.category}}</td>
-                            <td><a href="/update_item/{{c.id}}/">{{c.product_name}}</a></td>
-                            <td>
-                                {% if c.quantity <= c.reorder_levels %}
-                                    <div style="background-color:orange;">
-                                        <a href="/item_details/{{c.id}}/">{{c.quantity}}</a>
-                                    </div>
-                                {%else%}
-                                    <a href="/item_details/{{c.id}}/">{{c.quantity}}</a>
-                                {% endif %}
-                            </td>
-                            <td>{{c.unit_measurement}}</td>
-                            <!-- <td><a href="/item_details/{{c.id}}/">{{c.quantity}}</a></td> -->
-                            <td><a href="/reorder_level/{{c.id}}">{{c.reorder_levels}}</a></td>
-                            <!-- <td>{{c.timestamp}}</td> -->
-                            <td>{{c.last_updated}}</td>
-                            <td><a href="/delete_items/{{c.id}}">Delete</a></td>
-                        </tr>
-                    {%endfor%}
-                </table>
+        <h1 class="text-center">Inventory List</h1>
+        <br>
+        <div class="row">
+            <div class="col-sm-2">
+                <form class="navbar-form navbar-right" action="/items">
+                    <label class="fw-bold" for="search_category">Search by Category:</label>
+                    <input name="c" class="form-control" placeholder="Category" id="search_category">
+                    <label class="fw-bold" for="search_product">Search by Product:</label>
+                    <input name="p" class="form-control" placeholder="Product" id="search_product">
+                    <br>
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </form>
             </div>
-        {%endif%}
+            <div class="col-sm-10">
+                {% if inventory_display|length == 0  %}
+                <h3 class="text-center">Sorry, not category found!</h3>
+                {% else %}
+                <div class="display_table">
+                    <table class="table">
+                        <thead class="table-dark text-center">
+                            <tr>
+                                <!-- <th>COUNT</th> -->
+                                <th>CATEGORY</th>
+                                <th>PRODUCT NAME</th>
+                                <th>QUANTITY IN STOCK</th>
+                                <th>UNIT OF MEASUREMENT</th>
+                                <th>MINIMUM REQUIRED IN STOCK</th>
+                                <!-- <th>TIMESTAMP</th> -->
+                                <th>LAST UPDATED</th>
+                                <th>MANAGE</th>
+                                <th>X</th>
+                            </tr>
+                        </thead>
+                        {%for c in inventory_display%}
+                            <tr class="text-center">
+                                <!-- <td>{{c.id}}</td> -->
+                                <td>{{c.category}}</td>
+                                <td><a href="/update_item/{{c.id}}/">{{c.product_name}}</a></td>
+                                <td>
+                                    {% if c.quantity <= c.reorder_levels %}
+                                        <div style="background-color:orange;">
+                                            <span class="text-muted">{{c.quantity}}</span>
+                                            <!-- <a href="/item_details/{{c.id}}/">{{c.quantity}}</a> -->
+                                        </div>
+                                    {%else%}
+                                        <span class="text-muted">{{c.quantity}}</span>
+                                        <!-- <a href="/item_details/{{c.id}}/">{{c.quantity}}</a> -->
+                                    {% endif %}
+                                </td>
+                                <td>{{c.unit_abbreviation}}</td>
+                                <!-- <td><a href="/item_details/{{c.id}}/">{{c.quantity}}</a></td> -->
+                                <!-- <td><a href="/reorder_level/{{c.id}}">{{c.reorder_levels}}</a></td> -->
+                                <td>{{c.reorder_levels}}</td>
+                                <!-- <td>{{c.timestamp}}</td> -->
+                                <td>
+                                    <span class="text-muted">{{c.last_updated.strftime('%m/%d/%Y %H:%M')}}</span>
+                                </td>
+                                <td>
+                                    <a href="/item_details/{{c.id}}/"><i class="bi bi-kanban"></i></a>
+                                </td>
+                                <td><a href="/delete_items/{{c.id}}"><i class="bi bi-trash"></i></a></td>
+                            </tr>
+                        {%endfor%}
+                    </table>
+                </div>
+            </div>  
+            {%endif%}
+        </div>
     </div>
 {% endblock %}

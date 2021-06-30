@@ -1,6 +1,6 @@
 """Seed file to make sample data fro pets db."""
 
-from models import User, Stock, db
+from models import User, Stock, db, UnitConvertion
 from app import app
 
 #----- create database in terminal
