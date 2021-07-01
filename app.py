@@ -17,7 +17,7 @@ API_BASE_URL = 'https://api.spoonacular.com/recipes/convert?'
 # APP CONFIGURATIONS -> 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = (
-    os.environ.get('DATABASE_URL', 'postgresql:///restaurant_inventory_db'))
+    os.environ.get('DATABASE_URL', 'postgresql://restaurant_inventory_db'))
 # app.config['SQLALCHEMY_DATABASE_URI'] ='postgresql:///restaurant_inventory_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = False
