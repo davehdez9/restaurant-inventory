@@ -29,6 +29,7 @@ class StockForm(FlaskForm):
     product_name = StringField("Product Name", validators=[InputRequired()])
     quantity = FloatField('Quantity', validators=[InputRequired()])
     unit_abbreviation = SelectField("Unit Measurement", choices=[('Kg', 'Kilograms'), ('lbs', 'pounds'), ('Gr', 'Grams')],  validators=[InputRequired()])
+    # unit_abbreviation = SelectField("Unit Measurement")
     reorder_level = StringField("Reorder Level", validators=[InputRequired()])
 
 class StockUpdateForm(FlaskForm):

@@ -204,7 +204,7 @@ def add_item():
     form = StockForm()
 
     # [ x] -> CHECK
-    # unit = db.session.query(UnitConvertion.unit_abbreviation, UnitConvertion.unit_name).one()
+    # unit = db.session.query(UnitConvertion.unit_abbreviation, UnitConvertion.unit_name).all()
     # form.unit_abbreviation.choices = unit
 
     if form.validate_on_submit():
