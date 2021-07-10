@@ -4,7 +4,7 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6">
-        <h1 class="jumbotron-heading text-center">Add Items</h1>
+        <h1 class="jumbotron-heading text-center">Update Item </h1>
 
         <form method="POST">
             {{ form.hidden_tag() }}
@@ -30,8 +30,8 @@
             </p> -->
             {% endfor %}
 
-            <button class="btn btn-success" type="submit">Add</button>
-            <a href="/items">View Current Items</a>
+            <button class="btn btn-success" type="submit">Save</button>
+            <a href="/items">View All Items</a>
         </form>   
     </div> 
 </div>

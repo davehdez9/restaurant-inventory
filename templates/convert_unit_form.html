@@ -3,7 +3,8 @@
 
 {% block content %}
 
-<div class="modal fade" id="add" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<!-- modal to Add Convertion -->
+<!-- <div class="modal fade" id="add" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -30,18 +31,18 @@
       </div>
     </div>
   </div>
-</div>
+</div> -->
 
 
 <div class="jumbotron">
-  <h1>Unit Convertion</h1>  
+  <h1>Unit Conversion</h1>  
   
-  <div class="row">
+  <!-- <div class="row">
     <div class="col-md-12 text-right">
       <button class="btn btn-success badge rounded-pill bg-success" data-bs-toggle="modal" data-bs-target="#add" style="width:80px;">Add</button>
     </div>
   </div>
-  <br>
+  <br> -->
 
   {% if result %}
   <h3>{{result}}</h3>
@@ -52,7 +53,7 @@
     <label class="fw-bold" for="product">Product Name:</label>
     <input class="form-control" type="text" name="product" placeholder="Ingredient Name" id="product">
     
-    <label class="/fw-bold for="quantity">Quantity:</label>
+    <label class="fw-bold" for="quantity">Quantity:</label>
     <input class="form-control" type="text" name="quantity" placeholder="Quantity (Example: 10)" id="quantity">
 
     <label class="fw-bold" for="convertFrom">Convert From:</label>
@@ -62,7 +63,7 @@
     <input class="form-control" type="text" name="convertTo" placeholder="Unit (Example: KG)" id="convertTo">
   
     <button class="btn btn-success">Convert</button>
-    <a href="/add_unit_convertion">Add New Unit</a>
+    <!-- <a href="/add_unit_convertion">Add New Unit</a> -->
   </form> 
 </div>
 {% endblock %}

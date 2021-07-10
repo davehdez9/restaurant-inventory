@@ -28,17 +28,23 @@ class StockForm(FlaskForm):
     category = StringField("Category", validators=[InputRequired()])
     product_name = StringField("Product Name", validators=[InputRequired()])
     quantity = FloatField('Quantity', validators=[InputRequired()])
-    unit_abbreviation = SelectField("Unit Measurement", choices=[('Kg', 'Kilograms'), ('lbs', 'pounds'), ('Gr', 'Grams')],  validators=[InputRequired()])
+    unit_abbreviation = SelectField("Unit of Measurement", choices=[('Kg', 'Kilograms'), ('lbs', 'Pounds'), ('Gr', 'Grams'), ('Oz', 'Ounces'), ('C', 'Cups'), ('L', 'Liters'), ('Gal', 'Gallons'), ('Qt', 'Quart'), ('Pt', 'Pint'), ('Units', 'Units')],  validators=[InputRequired()])
     # unit_abbreviation = SelectField("Unit Measurement")
-    reorder_level = StringField("Reorder Level", validators=[InputRequired()])
+    reorder_level = StringField("Minimum required in stock", validators=[InputRequired()])
 
 class StockUpdateForm(FlaskForm):
     """Form to update an item from the db"""
     category = StringField("Category")
     product_name = StringField("Product Name")
-    quantity = FloatField('Quantity')
-    unit_abbreviation = StringField("Unit Measurement")
+    # quantity = FloatField('Quantity')
+    unit_abbreviation = SelectField("Unit of Measurement", choices=[('Kg', 'Kilograms'), ('lbs', 'Pounds'), ('Gr', 'Grams'), ('Oz', 'Ounces'), ('C', 'Cups'), ('L', 'Liters'), ('Gal', 'Gallons'), ('Qt', 'Quart'), ('Pt', 'Pint'), ('Units', 'Units')],  validators=[InputRequired()])
+    # unit_abbreviation = StringField("Unit Measurement")
     reorder_level = StringField("Reorder Level")
+
+class Search(FlaskForm):
+    """Form to search products and categories"""
+    category = StringField("Category")
+    product_name = StringField("Product Name")
 class IssueForm(FlaskForm):
     issue_quantity = FloatField("Issue Quantity")
     # issue_to = StringField("Issue to")

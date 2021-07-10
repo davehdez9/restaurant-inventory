@@ -9,7 +9,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import exc
 from models import db, connect_db, User, Stock, UnitConvertion
-from forms import SignUpForm, LoginForm, StockForm, StockUpdateForm, IssueForm, ReceiveForm,UserEditForm, AddConvertion
+from forms import SignUpForm, LoginForm, StockForm, StockUpdateForm, IssueForm, ReceiveForm,UserEditForm, AddConvertion, Search
 from secrets_git import API_KEY
 
 CURR_USER_KEY = "curr_user"
@@ -18,10 +18,10 @@ API_BASE_URL = 'https://api.spoonacular.com/recipes/convert?'
 # APP CONFIGURATIONS -> 
 app = Flask(__name__)
 
-# app.config['SQLALCHEMY_DATABASE_URI'] = (
-#     os.environ.get('DATABASE_URL', 'postgresql://restaurant_inventory_db'))
+app.config['SQLALCHEMY_DATABASE_URI'] = (
+    os.environ.get('DATABASE_URL', 'postgresql:///restaurant_inventory_db'))
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL').replace("://", "ql://", 1) or 'sqlite:///restaurant_inventory_db'
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL').replace("://", "ql://", 1) or 'sqlite:///restaurant_inventory_db'
 # app.config['SQLALCHEMY_DATABASE_URI'] ='postgresql:///restaurant_inventory_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = False
@@ -179,24 +179,38 @@ def home_page():
 # ----------------------Stock Routes
 @app.route('/items', methods=['GET', 'POST'])
 def list_items():
-
-
     if not g.user:
         flash("Access unauthorized", "danger")
         return redirect("/")
-    
-    search_category = request.args.get('c')
-    search_product = request.args.get('p')
-    # all_items = Stock.query.all()
+
+    form = Search()
 
     user_inventory = Stock.query.filter(Stock.user_id == g.user.id)
-    
-    if search_category or search_product:
-        inventory_display = user_inventory.filter(Stock.category.like(f"%{search_category}%"), Stock.product_name.like(f"%{search_product}%")).all()
-    else:
-        inventory_display = user_inventory.all()
 
-    return render_template('list_items.html', inventory_display=inventory_display)
+    if form.validate_on_submit():
+        category = form.category.data
+        product_name = form.product_name.data    
+
+        if category or product_name:
+            inventory_display = user_inventory.filter(Stock.category.like(f"%{category}%"), Stock.product_name.like(f"%{product_name}%")).all()
+        else:
+            inventory_display = user_inventory.all()
+            # return redirect(url_for('list_items', inventory_display=inventory_display, form=form))
+            return render_template('list_items.html', inventory_display=inventory_display, form=form)          
+    return render_template('list_items.html', form=form)
+
+    # search_category = request.args.get('c')
+    # search_product = request.args.get('p')
+    # all_items = Stock.query.all()
+
+    # user_inventory = Stock.query.filter(Stock.user_id == g.user.id)
+    
+    # if search_category or search_product:
+    #     inventory_display = user_inventory.filter(Stock.category.like(f"%{search_category}%"), Stock.product_name.like(f"%{search_product}%")).all()
+    # else:
+    #     inventory_display = user_inventory.all()
+
+    # return render_template('list_items.html', inventory_display=inventory_display)
 
 @app.route('/add_item', methods=['GET', 'POST'])
 def add_item():
@@ -210,6 +224,23 @@ def add_item():
     # [ x] -> CHECK
     # unit = db.session.query(UnitConvertion.unit_abbreviation, UnitConvertion.unit_name).all()
     # form.unit_abbreviation.choices = unit
+
+    ## Pseudocode for improving searches:
+    # # convert all user entires into: "first letter uppercase, all other letters lowercase"
+
+    # first_letter = # find first letter of string
+    # rest_of_word = # rest of string
+    # updated_word = first_letter.toUpperCase() + rest_of_word.toLowerCase()
+
+    # # search, you need to compare 2 strings, and both strings need to be converted to whatever you have saved in the database
+    # # if updated_word in database: return True
+
+    # first_letter = # find first letter of string
+    # rest_of_word = # rest of string
+    # updated_input = first_letter.toUpperCase() + rest_of_word.toLowerCase()
+
+    # # if updated_input in database return True
+
 
     if form.validate_on_submit():
         category = form.category.data
@@ -261,7 +292,7 @@ def update_item(id):
         db.session.commit()
         return redirect('/items')
     else:
-        return render_template('add_items.html', form=form)
+        return render_template('update_item.html', form=form)
 
 @app.route('/delete_items/<int:id>/', methods=['GET', 'POST'])
 def delete_items(id):
