@@ -7,30 +7,13 @@
         <br>
         <div class="row">
             <div class="col-sm-2">
-                <!-- <form class="navbar-form navbar-right" action="/items">
+                <form class="navbar-form navbar-right" action="/items">
                     <label class="fw-bold" for="search_category">Search by Category:</label>
                     <input name="c" class="form-control" placeholder="Category" id="search_category">
                     <label class="fw-bold" for="search_product">Search by Product:</label>
                     <input name="p" class="form-control" placeholder="Product" id="search_product">
                     <br>
                     <button type="submit" class="btn btn-primary">Search</button>
-                </form> -->
-                <form method="POST" action="{{ url_for('list_items')}}">
-                    {{ form.hidden_tag() }}
-        
-                    {% for field in form
-                        if field.widget.input_type != 'hidden' %}
-                    <div class="mb-3">
-                        {{ field.label }}
-                        {{ field(class_="form-control") }}
-        
-                        {% for error in field.errors %}
-                        <span class="form-text text-danger">{{ error }}</span>
-                        {% endfor %}
-                    </div>
-                    {% endfor %}
-                    
-                    <button class="btn btn-success" type="submit">Search</button>
                 </form>
             </div>
             <div class="col-sm-10">

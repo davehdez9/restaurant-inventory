@@ -8,12 +8,12 @@ class SignUpForm(FlaskForm):
     """Form for adding users."""
     username = StringField("Username", validators=[DataRequired(), 
                                                    Length(min=5, max=35, message="Username must be between %(min)d and %(max)dcharacters")], 
-                                                   render_kw={"placeholder": "frodo123"})
-    email = StringField("Email", validators=[DataRequired(), Email()], render_kw={"placeholder": "frodo123@example.com"})
+                                                   render_kw={"placeholder": "newuser123"})
+    email = StringField("Email", validators=[DataRequired(), Email()], render_kw={"placeholder": "newuser123@example.com"})
     password = PasswordField("Password", validators=[Length(min=6)])
     
 class LoginForm(FlaskForm):
-    username = StringField("username", validators=[DataRequired()], render_kw={"placeholder": "frodo123"})
+    username = StringField("username", validators=[DataRequired()], render_kw={"placeholder": "newuser123"})
     password = PasswordField("password", validators=[Length(min=6)])
 
 class UserEditForm(FlaskForm):

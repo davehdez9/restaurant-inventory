@@ -183,34 +183,33 @@ def list_items():
         flash("Access unauthorized", "danger")
         return redirect("/")
 
-    form = Search()
+    # form = Search()
+    # if form.validate_on_submit():
+    #     category = form.category.data
+    #     product_name = form.product_name.data   
+    #     user_inventory = Stock.query.filter(Stock.user_id == g.user.id)
 
-    user_inventory = Stock.query.filter(Stock.user_id == g.user.id)
+    #     if category or product_name:
+    #         inventory_display = user_inventory.filter(Stock.category.ilike(f"%{category}%"), Stock.product_name.like(f"%{product_name}%")).all()
+    #     else:
+    #         inventory_display = user_inventory.all()
+    #         # return redirect(url_for('list_items', inventory_display=inventory_display, form=form))
+    #         return render_template('list_items.html', inventory_display=inventory_display, form=form)       
+            
+    # return render_template('list_items.html', form=form)
 
-    if form.validate_on_submit():
-        category = form.category.data
-        product_name = form.product_name.data    
-
-        if category or product_name:
-            inventory_display = user_inventory.filter(Stock.category.like(f"%{category}%"), Stock.product_name.like(f"%{product_name}%")).all()
-        else:
-            inventory_display = user_inventory.all()
-            # return redirect(url_for('list_items', inventory_display=inventory_display, form=form))
-            return render_template('list_items.html', inventory_display=inventory_display, form=form)          
-    return render_template('list_items.html', form=form)
-
-    # search_category = request.args.get('c')
-    # search_product = request.args.get('p')
+    search_category = request.args.get('c')
+    search_product = request.args.get('p')
     # all_items = Stock.query.all()
 
-    # user_inventory = Stock.query.filter(Stock.user_id == g.user.id)
+    user_inventory = Stock.query.filter(Stock.user_id == g.user.id)
     
-    # if search_category or search_product:
-    #     inventory_display = user_inventory.filter(Stock.category.like(f"%{search_category}%"), Stock.product_name.like(f"%{search_product}%")).all()
-    # else:
-    #     inventory_display = user_inventory.all()
+    if search_category or search_product:
+        inventory_display = user_inventory.filter(Stock.category.ilike(f"%{search_category}%"), Stock.product_name.ilike(f"%{search_product}%")).all()
+    else:
+        inventory_display = user_inventory.all()
 
-    # return render_template('list_items.html', inventory_display=inventory_display)
+    return render_template('list_items.html', inventory_display=inventory_display)
 
 @app.route('/add_item', methods=['GET', 'POST'])
 def add_item():
@@ -340,7 +339,7 @@ def issue_items(id):
             db.session.commit()
             return redirect(url_for('item_details', id=id))
 
-    return render_template('add_items.html', item=item, form=form)
+    return render_template('issue_item.html', item=item, form=form)
 
 @app.route('/receive_items/<int:id>/', methods=['GET', 'POST'])
 def receive_items(id):
@@ -361,7 +360,7 @@ def receive_items(id):
             db.session.commit()
             return redirect(url_for('item_details', id=id))
 
-    return render_template('add_items.html', item=item, form=form)           
+    return render_template('receive_item.html', item=item, form=form)           
 
 @app.route('/convert')
 def convert():

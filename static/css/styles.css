@@ -1,0 +1,16 @@
+body {
+    font-family: 'Otomanopee One', sans-serif;
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+}
+  
+.navbar-brand > img {
+    display: inline-block;
+    margin-bottom: 2px;
+    margin-right: 5px;
+    width: 20px;
+    border-radius: 2px;
+}
