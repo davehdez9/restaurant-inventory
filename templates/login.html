@@ -1,24 +1,32 @@
 {% extends "base2.html" %}
 
 {% block content %}
-<h1 class="display-1">Login</h1>
-<p class="lead">Login Below. Don't have an account? <a href="/signUp">Sign Up Here!</a> </p>
+<div class="d-sm-flex align-items-center justify-content-between">
+    <img class="img-fluid w-50 d-none d-sm-block" src="../static/img/inv/main-qimg-.png" alt="">
 
-<form method="POST">
-    {{ form.hidden_tag() }}
+    <div>
+        <h2>Login</h2>
+        <!-- <p class="lead">Login Below. Don't have an account? <a href="/signUp">Sign Up Here!</a> </p> -->
+        <p class="lead">Login Below. Don't have an account? <a href="/signUp"><span class="badge rounded-pill bg-primary">Sign Up Here!</span></a> </p>
 
-    {% for field in form
-        if field.widget.input_type != 'hidden' %}
-    <p>
-        {{ field.label }}
-        {{ field(class_="form-control") }}
+        <form method="POST">
+            {{ form.hidden_tag() }}
 
-        {% for error in field.errors %}
-        <span class="form-text text-danger">{{ error }}</span>
-        {% endfor %}
-    </p>
-    {% endfor %}
+            {% for field in form
+                if field.widget.input_type != 'hidden' %}
 
-    <button class="btn btn-success" type="submit">Login</button>
-</form>
+                <div class="mb-3">
+                    {{ field.label }}
+                    {{ field(class_="form-control") }}
+
+                    {% for error in field.errors %}
+                    <span class="form-text text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+            <button class="btn btn-success" type="submit">Login</button>
+        </form>    
+    </div>
+</div>
 {% endblock %}

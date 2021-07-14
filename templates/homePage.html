@@ -2,10 +2,67 @@
 
 {% block content %}
 
-  <div class="jumbotron">
-    <h1>Welcome</h1>
-    <p class="lead">This example is a quick exercise to illustrate how fixed to top navbar works. As you scroll, it will remain fixed to the top of your browser’s viewport.</p>
-    <a class="btn btn-lg btn-primary" href="/docs/4.4/components/navbar/" role="button">View navbar docs &raquo;</a>
+<section class="jumbotron text-center">
+  <div class="container">
+    <h1 class="jumbotron-heading">Welcome to Invo!</h1>
+    <p class="lead text-muted">This is your dashboard where you view your current inventory, add new products and update your inventory levels. You can also access a handy unit conversion tool from your dashboard.</p>
   </div>
+</section>
+<div class="album py-5 bg-light ">
+  <div class="container ">
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+
+      <div class="col">
+        <a href="/items" class="d-block nav-heading text-center" style="text-decoration: none; color:black;">
+          <div class="card text-center">
+            <img src="../static/img/inv/list.png" class="card-img-top" alt="..." style="width: 25%; margin:15px auto;">
+            <div class="card-body">
+              <h5 class="card-title">View Current Inventory</h5>
+              <p class="card-text">See products in your current inventory, and update or delete them.
+              </p>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <div class="col">
+        <a href="/add_item" class="d-block nav-heading text-center" style="text-decoration: none; color:black;">
+          <div class="card text-center">
+            <img src="../static/img/inv/add-to-basket.png" class="card-img-top" alt="..." style="width: 25%; margin:15px auto;">
+            <div class="card-body">
+              <h5 class="card-title">Add New Products</h5>
+              <p class="card-text">Add a new product to your inventory!</p>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <div class="col">
+        <a href="/convert" class="d-block nav-heading text-center" style="text-decoration: none; color:black;">
+          <div class="card text-center">
+            <img src="../static/img/inv/groceries.png" class="card-img-top" alt="..." style="width: 25%; margin:15px auto;">
+            <div class="card-body">
+              <h5 class="card-title">Unit Conversions</h5>
+              <p class="card-text">Access your unit conversion tool!</p>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <div class="col">
+        <a href="/user/profile" class="d-block nav-heading text-center" style="text-decoration: none; color:black;">
+          <div class="card text-center">
+            <img src="../static/img/inv/profile.png" class="card-img-top" alt="..." style="width: 25%; margin:15px auto;">
+            <div class="card-body">
+              <h5 class="card-title">Profile</h5>
+              <p class="card-text">Link to edit your profile!</p>
+            </div>
+          </div>
+        </a>
+      </div>
+      
+    </div>
+  </div>
+</div>
 
 {% endblock %}

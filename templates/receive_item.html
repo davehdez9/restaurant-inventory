@@ -1,0 +1,33 @@
+{% extends "base2.html" %}
+{% block title %}Add Items{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h1 class="jumbotron-heading text-center">Receive Item</h1>
+
+        <form method="POST">
+            {{ form.hidden_tag() }}
+
+            {% for field in form
+                if field.widget.input_type != 'hidden' %}
+            
+            <div class="mb-3">
+                {{ field.label }}
+                {{ field(class_="form-control") }}
+
+                {% for error in field.errors %}
+                <span class="form-text text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
+            {% endfor %}
+
+            <button class="btn btn-success" type="submit">Receive</button>
+            <a class="btn btn-secondary" href="/item_details/{{ item.id }}/" role="button">Go Back</a>
+            <!-- <button class="btn btn-secondary" type="submit"><a href="/item_details/{{ item.id }}/">Go Back</a></button> -->
+        </form>   
+    </div> 
+</div>
+
+
+{% endblock %}

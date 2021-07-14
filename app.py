@@ -1,39 +1,39 @@
+from logging import error
 import os
-import logging
+import re
+from flask.wrappers import Response
 import requests
-import json
 
-from flask import Flask, request, render_template, redirect, flash, session, jsonify, g, url_for
-# from secrets import API_KEY
-# from flask_whooshalchemy import whoosh_index
+from flask import Flask, request, render_template, redirect, flash, session, g, url_for
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
-
-from models import db, connect_db, User, Stock
-from forms import SignUpForm, LoginForm, ProductForm, VendorForm, StockForm, StockUpdateForm, IssueForm, ReceiveForm, ReorderLevelForm, ConvertUnitForm
-
-log = logging.getLogger("my-logger")
-log.info("Hello, world")
+from sqlalchemy import exc
+from models import db, connect_db, User, Stock, UnitConvertion
+from forms import SignUpForm, LoginForm, StockForm, StockUpdateForm, IssueForm, ReceiveForm,UserEditForm
+from secret import API_KEY
 
 CURR_USER_KEY = "curr_user"
 API_BASE_URL = 'https://api.spoonacular.com/recipes/convert?'
-API_KEY = '087fcaf2057b4da69bd7067c566617ed'
 
 # APP CONFIGURATIONS -> 
 app = Flask(__name__)
-# app.config['SQLALCHEMY_DATABASE_URI'] = (
-#     os.environ.get('postgresql:///restaurant_inventory_db'))
-app.config['SQLALCHEMY_DATABASE_URI'] ='postgresql:///restaurant_inventory_db'
+
+# TO WORK ON DEVELOPMENT -> 
+app.config['SQLALCHEMY_DATABASE_URI'] = (
+    os.environ.get('DATABASE_URL', 'postgresql:///restaurant_inventory_db'))
+
+# TO WORK ON PRODUCTION -> 
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL').replace("://", "ql://", 1) or 'sqlite:///restaurant_inventory_db'
+# app.config['SQLALCHEMY_DATABASE_URI'] ='postgresql:///restaurant_inventory_db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ECHO'] = True
-app.config['SECRET_KEY'] = 'my-secret-key'
+app.config['SQLALCHEMY_ECHO'] = False
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY','my-secret-key')
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
-# app.config['WHOOSH_BASE'] = 'whoosh'
+app.debug = True
 
 debug = DebugToolbarExtension(app)
-
 connect_db(app)
-# whoosh_index(app, Stock)
 
 ######################################################################
 # User signup/login/logout
@@ -45,7 +45,7 @@ def add_user_to_g():
     if CURR_USER_KEY in session:
         g.user = User.query.get(session[CURR_USER_KEY])
     else:
-        g.user: None
+        g.user = None
 
 def do_login(user):
     """Log in User"""
@@ -82,8 +82,7 @@ def sign_up():
     if form.validate_on_submit():
         try:
             user = User.signup(
-                first_name = form.first_name.data,
-                last_name = form.last_name.data,
+                username = form.username.data,
                 email = form.email.data,
                 password = form.password.data
             )
@@ -103,17 +102,16 @@ def sign_up():
 # ----- User Login Route  
 @app.route('/login', methods=['GET', 'POST'])
 def login_user():
-    """handle User Loging"""
+    """handle User Login"""
     
     form = LoginForm()
 
     if form.validate_on_submit():
-
-        user = User.authenticate(form.email.data, form.password.data)
+        user = User.authenticate(form.username.data, form.password.data)
 
         if user:
             do_login(user)
-            flash("Welcome Back!", "success")
+            flash(f"Hello, {user.username}", "success")
             return redirect('/home')
         
         flash("invalid credentials", 'danger')
@@ -125,76 +123,190 @@ def login_user():
 @app.route("/logout")
 def logout_user():
     """Handle logout of users"""
-    # session.pop('user_id')
-    # flash("GoodBye!")
     do_logout()
-    flash('Your are now Logout', 'success')
-    return redirect('/')
+    flash('You are now logged out', 'success')
+    return redirect('/login')
+
+# User Profile Route 
+@app.route('/user/profile', methods=["GET", "POST"]) 
+def profile():
+    """Update profile for current user"""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    
+    user = g.user
+    form = UserEditForm(obj=user)
+
+    if form.validate_on_submit():
+        if User.authenticate(user.username, form.password.data):
+            user.username = form.username.data
+            user.email = form.email.data
+
+            db.session.commit()
+            return redirect("/items")
+        
+        flash("Wrong Password, please try again.", 'danger')
+    
+    return render_template('edit_profile.html', form=form, user_id=user.id)
+
+# User delete Route
+@app.route('/users/delete', methods=['POST'])
+def delete_user():
+    """Delete User."""
+
+    if not g.user:
+        flash("Access unauthorized.", 'danger')
+        return redirect('/')
+    
+    do_logout()
+
+    db.session.delete(g.user)
+    db.session.commit()
+
+    return redirect('/signUp')
+
+##################################################################################
 
 # ----- Home page Route
 @app.route('/home')
 def home_page():
+    """Home Page App"""
     if g.user:
         return render_template("homePage.html")
     else: 
         redirect('/')
 
 # ----------------------Stock Routes
+
+# Items Route
 @app.route('/items', methods=['GET', 'POST'])
 def list_items():
+    if not g.user:
+        flash("Access unauthorized", "danger")
+        return redirect("/")
+
+    # form = Search()
+    # if form.validate_on_submit():
+    #     category = form.category.data
+    #     product_name = form.product_name.data   
+    #     user_inventory = Stock.query.filter(Stock.user_id == g.user.id)
+
+    #     if category or product_name:
+    #         inventory_display = user_inventory.filter(Stock.category.ilike(f"%{category}%"), Stock.product_name.like(f"%{product_name}%")).all()
+    #     else:
+    #         inventory_display = user_inventory.all()
+    #         # return redirect(url_for('list_items', inventory_display=inventory_display, form=form))
+    #         return render_template('list_items.html', inventory_display=inventory_display, form=form)       
+            
+    # return render_template('list_items.html', form=form)
 
     search_category = request.args.get('c')
     search_product = request.args.get('p')
     # all_items = Stock.query.all()
+
+    user_inventory = Stock.query.filter(Stock.user_id == g.user.id)
     
     if search_category or search_product:
-        search = Stock.query.filter(Stock.category.like(f"%{search_category}%"), Stock.product_name.like(f"%{search_product}%")).all()
+        inventory_display = user_inventory.filter(Stock.category.ilike(f"%{search_category}%"), Stock.product_name.ilike(f"%{search_product}%")).all()
     else:
-        search = Stock.query.all()
+        inventory_display = user_inventory.all()
 
-    return render_template('list_items.html', search=search)
+    return render_template('list_items.html', inventory_display=inventory_display)
 
+# Add Items Route
 @app.route('/add_item', methods=['GET', 'POST'])
 def add_item():
+
+    if not g.user:
+        flash("Access unauthorized", "danger")
+        return redirect("/")
+
     form = StockForm()
+
+    # [ x] -> CHECK
+    # unit = db.session.query(UnitConvertion.unit_abbreviation, UnitConvertion.unit_name).all()
+    # form.unit_abbreviation.choices = unit
+
+    ## Pseudocode for improving searches:
+    # # convert all user entires into: "first letter uppercase, all other letters lowercase"
+
+    # first_letter = # find first letter of string
+    # rest_of_word = # rest of string
+    # updated_word = first_letter.toUpperCase() + rest_of_word.toLowerCase()
+
+    # # search, you need to compare 2 strings, and both strings need to be converted to whatever you have saved in the database
+    # # if updated_word in database: return True
+
+    # first_letter = # find first letter of string
+    # rest_of_word = # rest of string
+    # updated_input = first_letter.toUpperCase() + rest_of_word.toLowerCase()
+
+    # # if updated_input in database return True
+
 
     if form.validate_on_submit():
         category = form.category.data
         product_name = form.product_name.data
         quantity = form.quantity.data
-
-        
+        unit_abbreviation = form.unit_abbreviation.data
+        reorder_level = form.reorder_level.data
 
         new_item = Stock(
             category=category,
             product_name=product_name,
             quantity=quantity,
+            reorder_levels=reorder_level,
+            user_id= g.user.id,
+            unit_abbreviation=unit_abbreviation
         )
+
         db.session.add(new_item)
-        flash("Added Successfully", "success")
+        
         db.session.commit()
+        flash("Added Successfully", "success")
         return redirect('/items')
+       
     else:
         return render_template('add_items.html', form=form)
 
+# Update Item Route
 @app.route('/update_item/<int:id>/', methods=["GET", "POST"])
 def update_item(id):
-    query = Stock.query.get_or_404(id)
-    form = StockUpdateForm(obj=query)
+
+    if not g.user:
+        flash("Access unauthorized", "danger")
+        return redirect("/")
+
+    stock = Stock.query.get_or_404(id)
+    form = StockUpdateForm(obj=stock)
+
+    # CHECK
+    # unit = db.session.query(UnitConvertion.unit_abbreviation, UnitConvertion.unit_name).all()
+    # form.unit_abbreviation.choices = unit
 
     if form.validate_on_submit():
-        query.category = form.category.data
-        query.product_name = form.product_name.data
-        query.quantity = form.quantity.data
+        stock.category = form.category.data
+        stock.product_name = form.product_name.data
+        stock.quantity = form.quantity.data
+        stock.unit_abbreviation = form.unit_abbreviation.data
+        stock.reorder_levels = form.reorder_level.data
         flash("Updated Successfully", "success")
 
         db.session.commit()
         return redirect('/items')
     else:
-        return render_template('add_items.html', form=form)
+        return render_template('update_item.html', form=form)
 
+# Delete Item Route
 @app.route('/delete_items/<int:id>/', methods=['GET', 'POST'])
 def delete_items(id):
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
     query = Stock.query.get_or_404(id)
 
     if request.method == 'POST':
@@ -206,13 +318,23 @@ def delete_items(id):
     
     return render_template('delete_items.html')
 
+# Details of single item Route
 @app.route('/item_details/<int:id>/')
 def item_details(id):
+    if CURR_USER_KEY not in session:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
     item = Stock.query.get_or_404(id)
     return render_template('item_detail.html', item=item)
 
+# Issue Item Route
 @app.route('/issue_items/<int:id>/', methods=['GET', 'POST'])
 def issue_items(id):
+    if CURR_USER_KEY not in session:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
     item = Stock.query.get_or_404(id)
     form = IssueForm(obj=item)
 
@@ -226,10 +348,15 @@ def issue_items(id):
             db.session.commit()
             return redirect(url_for('item_details', id=id))
 
-    return render_template('add_items.html', item=item, form=form)
+    return render_template('issue_item.html', item=item, form=form)
 
+# Receive Item Route
 @app.route('/receive_items/<int:id>/', methods=['GET', 'POST'])
 def receive_items(id):
+    if CURR_USER_KEY not in session:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
     item = Stock.query.get_or_404(id)
     form = ReceiveForm(obj=item)
 
@@ -243,32 +370,25 @@ def receive_items(id):
             db.session.commit()
             return redirect(url_for('item_details', id=id))
 
-    return render_template('add_items.html', item=item, form=form)           
-        
-@app.route('/reorder_level/<int:id>/', methods=['GET', 'POST'])
-def reorder_level(id):
-    item = Stock.query.get_or_404(id)
-    form = ReorderLevelForm(obj=item)
+    return render_template('receive_item.html', item=item, form=form)           
 
-    if form.validate_on_submit():
-        if item:
-            item.reorder_levels = form.reorder_level.data
-            db.session.commit()
-            flash(f"Reorder Level for {item.product_name} is update to {item.reorder_levels}")
-            return redirect('/items')
-    
-    return render_template('add_items.html', form=form, item=item)
-
+# Convert unit of meaurement Route
 @app.route('/convert')
 def convert():
     return render_template('convert_unit_form.html')
 
-@app.route('/convert_unit')
+# Convert unit of meaurement Route
+@app.route('/convert_unit', methods=['GET', 'POST'])
 def convert_unit_form():
-    ingredient = request.args.get('ingredient')
-    source_amount = request.args.get('sourceAmount')
-    source_unit = request.args.get('sourceUnit')
-    target_unit = request.args.get('targetUnit')
+    if CURR_USER_KEY not in session:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+
+    ingredient = request.args.get('product')
+    source_amount = request.args.get('quantity')
+    source_unit = request.args.get('convertFrom')
+    target_unit = request.args.get('convertTo')
 
     response = requests.get(f"{API_BASE_URL}", params={'apiKey':API_KEY, 
                                                         'ingredientName':ingredient, 
@@ -278,181 +398,44 @@ def convert_unit_form():
     )
 
     data = response.json()
-    result = data['answer']
+    result = data.get('answer')
 
-    return render_template("convert_unit_form.html", answer=result)
+    return render_template("convert_unit_form.html", result=result)
+    # return redirect(url_for('convert'), result=result)
 
+# @app.route('/add_convertion', methods=['GET', 'POST'])
+# def add_convertion():
 
+#     if not g.user:
+#         flash("Access unauthorized", "danger")
+#         return redirect("/")
 
+#     if request.method == 'POST':
+#         unit_name = request.form["name"]
+#         unit_abbreviation = request.form["abbreviation"]
 
+#         data = UnitConvertion(unit_abbreviation=unit_abbreviation, unit_name=unit_name )
+#         db.session.add(data)
+#         db.session.commit()
+#         flash("Added Successfully", "success")
+#         return redirect(url_for('convert'))
 
+# @app.route('/add_convertion', methods = ['GET', 'POST'])
+# def add_convertion():
+#     if not g.user:
+#         flash("Access unauthorized", "danger")
+#         return redirect("/")
 
+#     form = AddConvertion()
 
+#     if form.validate_on_submit():
+#         unit_name = form.unit_name.data
+#         unit_abbreviation = form.unit_abbreviation.data
 
-    
-# ---------- Products Routes
-# GET /products - Get all products
-@app.route('/products')
-def list_products():
-    if not g.user:
-        flash("Please Login First")
-        return redirect('/')
-    all_products = Product.query.all()
-    return render_template('products/products.html', products=all_products)
-
-# GET /products/[id] - Get product
-@app.route('/products/<int:id>')
-def find_product(id):
-    product = Product.query.get_or_404(id)
-    return jsonify(product=product.serialize())
-
-# POST /products -  Create product
-@app.route('/products/new', methods=['GET', 'POST'])
-def add_product():
-    form = ProductForm()
-    if form.validate_on_submit():
-        product_name = form.product_name.data
-        product_description = form.product_description.data
-        unit_measurement = form.unit_measurement.data
-        package_amount = form.package_amount.data
-        price_per_package= form.price_per_package.data
-
-        new_product = Product(
-            product_name=product_name,
-            product_description=product_description,
-            unit_measurement=unit_measurement,
-            package_amount=package_amount,
-            price_per_package=price_per_package
-        )
-        db.session.add(new_product)
-        db.session.commit()
-        return redirect("/products")
-    else:
-        return render_template('products/add_new_product_form.html', form=form)
-    
-# PUT/PATCH /products/[id] - Update product
-@app.route('/products/<int:id>/edit', methods=["GET", "POST"])
-def update_product(id):
-
-    if not g.user:
-        flash("Access unauthorized", "danger")
-        return redirect('/')
-
-    product = Product.query.get_or_404(id)
-    # product = Product.query.get(id)
-    form = ProductForm(obj=product)
-
-    if form.validate_on_submit():
-        product.product_name = form.product_name.data
-        product.product_description = form.product_description.data
-        product.unit_measurement = form.unit_measurement.data
-        product.package_amount = form.package_amount.data
-        product.price_per_package = form.price_per_package.data
-
-        db.session.commit()
-        return redirect("/products")
-    else:
-        return render_template('products/edit_product_form.html', form=form, product=product)
-
-# DELETE /products/[id] - Delete Products 
-@app.route('/products/<int:id>/delete', methods=["POST"])
-def delete_product(id):
-    """delete product """
-
-    if not g.user:
-        flash("Access unauthorized", "danger")
-        return redirect('/')
-    
-    product = Product.query.get_or_404(id)
-    
-    db.session.delete(product)
-    db.session.commit()
-    return redirect('/products')
-
-# ---------- Vendor Routes
-# GET /Vendors - Get all Vendors
-@app.route('/vendors')
-def list_vendors():
-    """Get all Vendors"""
-    if not g.user:
-        flash("Please Login First")
-        return redirect('/')
-    
-    # all_vendors = [vendor.serialize() for vendor in Vendor.query.all()]
-    all_vendors = Vendor.query.all()
-    return render_template('vendors/vendors.html', vendors=all_vendors)
-# GET /vendors/[id] - Get vendors
-@app.route('/vendors/<int:id>')
-def find_vendor(id):
-    vendor = Vendor.query.get_or_404(id)
-    return jsonify(vendor=vendor.serialize())
-
-# POST /vendors -  Create product
-@app.route('/vendors/new', methods=["GET", "POST"])
-def add_vendor():
-    """Add a New Vendor"""
-
-    form = VendorForm()
-    if form.validate_on_submit():
-        vendor_name=form.vendor_name.data,
-        vendor_description=form.vendor_description.data
-        contact_name=form.contact_name.data
-        contact_email=form.contact_email.data
-        vendor_website=form.vendor_website.data
-        vendor_notes=form.vendor_notes.data
-
-        new_vendor = Vendor(
-            vendor_name=vendor_name,
-            vendor_description=vendor_description,
-            contact_name=contact_name,
-            contact_email=contact_email,
-            vendor_website=vendor_website,
-            vendor_notes=vendor_notes
-        )
-        db.session.add(new_vendor)
-        db.session.commit()
-        return redirect("/vendors")
-    else:
-        return render_template('vendors/add_new_vendor_form.html',form=form)
-    
-# PUT/PATCH /vendors/[id] - Update product
-@app.route('/vendors/<int:id>/edit', methods=["GET", "POST"])
-def update_vendor(id):
-    """Update Product"""
-    if not g.user:
-        flash("Access Unauthorized", "danger")
-        return redirect('/')
-
-    vendor = Vendor.query.get_or_404(id)
-
-    form = VendorForm(obj=vendor)
-
-    if form.validate_on_submit():
-        vendor.vendor_name=form.vendor_name.data,
-        vendor.vendor_description=form.vendor_description.data
-        vendor.contact_name=form.contact_name.data
-        vendor.contact_email=form.contact_email.data
-        vendor.vendor_website=form.vendor_website.data
-        vendor.vendor_notes=form.vendor_notes.data
-
-        db.session.commit()
-        return redirect("/vendors")
-    else:
-        return render_template('vendors/edit_vendor_form.html', form=form, vendor=vendor)
-
-
-# DELETE /vendor/[id] - Delete vendor 
-@app.route('/vendors/<int:id>/delete', methods=["POST"])
-def delete_vendor(id):
-    """Delete Vendor"""
-    if not g.user:
-        flash("Access unauthorized", "danger")
-        return redirect('/')
-    
-    vendor = Vendor.query.get_or_404(id)
-    db.session.delete(vendor)
-    db.session.commit()
-    return redirect('/vendors')
-
-
-
+#         data = UnitConvertion(unit_name=unit_name, unit_abbreviation=unit_abbreviation)
+#         db.session.add(data)
+#         flash("Added Successfully", 'success')
+#         db.session.commit()
+#         return redirect(url_for('convert'))
+#     else:
+#         return render_template(convert_unit_form, form=form)
