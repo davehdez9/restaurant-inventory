@@ -12,6 +12,7 @@ from models import db, connect_db, User, Stock, UnitConvertion
 from forms import SignUpForm, LoginForm, StockForm, StockUpdateForm, IssueForm, ReceiveForm,UserEditForm, AddConvertion, Search
 from secrets_git import API_KEY
 
+
 CURR_USER_KEY = "curr_user"
 API_BASE_URL = 'https://api.spoonacular.com/recipes/convert?'
 
