@@ -286,7 +286,6 @@ def update_item(id):
     if form.validate_on_submit():
         stock.category = form.category.data
         stock.product_name = form.product_name.data
-        stock.quantity = form.quantity.data
         stock.unit_abbreviation = form.unit_abbreviation.data
         stock.reorder_levels = form.reorder_level.data
         flash("Updated Successfully", "success")
