@@ -9,8 +9,8 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import exc
 from models import db, connect_db, User, Stock, UnitConvertion
-from forms import SignUpForm, LoginForm, StockForm, StockUpdateForm, IssueForm, ReceiveForm,UserEditForm, AddConvertion, Search
-from secrets_git import API_KEY
+from forms import SignUpForm, LoginForm, StockForm, StockUpdateForm, IssueForm, ReceiveForm,UserEditForm
+from secret import API_KEY
 
 CURR_USER_KEY = "curr_user"
 API_BASE_URL = 'https://api.spoonacular.com/recipes/convert?'
@@ -18,13 +18,14 @@ API_BASE_URL = 'https://api.spoonacular.com/recipes/convert?'
 # APP CONFIGURATIONS -> 
 app = Flask(__name__)
 
-# to work on development
+# TO WORK ON DEVELOPMENT -> 
 # app.config['SQLALCHEMY_DATABASE_URI'] = (
 #     os.environ.get('DATABASE_URL', 'postgresql:///restaurant_inventory_db'))
 
-# to work on production
+# TO WORK ON PRODUCTION -> 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL').replace("://", "ql://", 1) or 'sqlite:///restaurant_inventory_db'
 # app.config['SQLALCHEMY_DATABASE_URI'] ='postgresql:///restaurant_inventory_db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY','my-secret-key')
@@ -150,7 +151,7 @@ def profile():
     
     return render_template('edit_profile.html', form=form, user_id=user.id)
 
-
+# User delete Route
 @app.route('/users/delete', methods=['POST'])
 def delete_user():
     """Delete User."""
@@ -177,8 +178,9 @@ def home_page():
     else: 
         redirect('/')
 
-
 # ----------------------Stock Routes
+
+# Items Route
 @app.route('/items', methods=['GET', 'POST'])
 def list_items():
     if not g.user:
@@ -213,6 +215,7 @@ def list_items():
 
     return render_template('list_items.html', inventory_display=inventory_display)
 
+# Add Items Route
 @app.route('/add_item', methods=['GET', 'POST'])
 def add_item():
 
@@ -268,6 +271,7 @@ def add_item():
     else:
         return render_template('add_items.html', form=form)
 
+# Update Item Route
 @app.route('/update_item/<int:id>/', methods=["GET", "POST"])
 def update_item(id):
 
@@ -295,6 +299,7 @@ def update_item(id):
     else:
         return render_template('update_item.html', form=form)
 
+# Delete Item Route
 @app.route('/delete_items/<int:id>/', methods=['GET', 'POST'])
 def delete_items(id):
 
@@ -313,6 +318,7 @@ def delete_items(id):
     
     return render_template('delete_items.html')
 
+# Details of single item Route
 @app.route('/item_details/<int:id>/')
 def item_details(id):
     if CURR_USER_KEY not in session:
@@ -322,6 +328,7 @@ def item_details(id):
     item = Stock.query.get_or_404(id)
     return render_template('item_detail.html', item=item)
 
+# Issue Item Route
 @app.route('/issue_items/<int:id>/', methods=['GET', 'POST'])
 def issue_items(id):
     if CURR_USER_KEY not in session:
@@ -343,6 +350,7 @@ def issue_items(id):
 
     return render_template('issue_item.html', item=item, form=form)
 
+# Receive Item Route
 @app.route('/receive_items/<int:id>/', methods=['GET', 'POST'])
 def receive_items(id):
     if CURR_USER_KEY not in session:
@@ -364,10 +372,12 @@ def receive_items(id):
 
     return render_template('receive_item.html', item=item, form=form)           
 
+# Convert unit of meaurement Route
 @app.route('/convert')
 def convert():
     return render_template('convert_unit_form.html')
 
+# Convert unit of meaurement Route
 @app.route('/convert_unit', methods=['GET', 'POST'])
 def convert_unit_form():
     if CURR_USER_KEY not in session:
@@ -393,22 +403,22 @@ def convert_unit_form():
     return render_template("convert_unit_form.html", result=result)
     # return redirect(url_for('convert'), result=result)
 
-@app.route('/add_convertion', methods=['GET', 'POST'])
-def add_convertion():
+# @app.route('/add_convertion', methods=['GET', 'POST'])
+# def add_convertion():
 
-    if not g.user:
-        flash("Access unauthorized", "danger")
-        return redirect("/")
+#     if not g.user:
+#         flash("Access unauthorized", "danger")
+#         return redirect("/")
 
-    if request.method == 'POST':
-        unit_name = request.form["name"]
-        unit_abbreviation = request.form["abbreviation"]
+#     if request.method == 'POST':
+#         unit_name = request.form["name"]
+#         unit_abbreviation = request.form["abbreviation"]
 
-        data = UnitConvertion(unit_abbreviation=unit_abbreviation, unit_name=unit_name )
-        db.session.add(data)
-        db.session.commit()
-        flash("Added Successfully", "success")
-        return redirect(url_for('convert'))
+#         data = UnitConvertion(unit_abbreviation=unit_abbreviation, unit_name=unit_name )
+#         db.session.add(data)
+#         db.session.commit()
+#         flash("Added Successfully", "success")
+#         return redirect(url_for('convert'))
 
 # @app.route('/add_convertion', methods = ['GET', 'POST'])
 # def add_convertion():

@@ -40,16 +40,12 @@ class StockUpdateForm(FlaskForm):
     unit_abbreviation = SelectField("Unit of Measurement", choices=[('Kg', 'Kilograms'), ('lbs', 'Pounds'), ('Gr', 'Grams'), ('Oz', 'Ounces'), ('C', 'Cups'), ('L', 'Liters'), ('Gal', 'Gallons'), ('Qt', 'Quart'), ('Pt', 'Pint'), ('Units', 'Units')],  validators=[InputRequired()])
     # unit_abbreviation = StringField("Unit Measurement")
     reorder_level = StringField("Reorder Level")
-
-class Search(FlaskForm):
-    """Form to search products and categories"""
-    category = StringField("Category")
-    product_name = StringField("Product Name")
 class IssueForm(FlaskForm):
     issue_quantity = FloatField("Issue Quantity")
     # issue_to = StringField("Issue to")
 class ReceiveForm(FlaskForm):
     receive_quantity = FloatField("Receive Quantity")
+
 # class ReorderLevelForm(FlaskForm):
 #     reorder_level = StringField("Reorder Level")
 
@@ -58,9 +54,13 @@ class ReceiveForm(FlaskForm):
 #     source_amount = FloatField("Quantity")
 #     source_unit = SelectField("Convert from")
 #     target_unit = SelectField("Convert to")
-class AddConvertion(FlaskForm):
-    unit_name = StringField("Unit Convertion")
-    unit_abbreviation = StringField("Abbreviation")
+# class AddConvertion(FlaskForm):
+#     unit_name = StringField("Unit Convertion")
+#     unit_abbreviation = StringField("Abbreviation")
 
+# class Search(FlaskForm):
+#     """Form to search products and categories"""
+#     category = StringField("Category")
+#     product_name = StringField("Product Name")
         
 
