@@ -1,0 +1,40 @@
+{% extends "base2.html" %}
+{% block title %}Add Unit Convertion{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h1 class="jumbotron-heading text-center">Add a New Unit Convertion</h1>
+
+        <form method="POST">
+            {{ form.hidden_tag() }}
+
+            {% for field in form
+                if field.widget.input_type != 'hidden' %}
+            
+            <div class="mb-3">
+                {{ field.label }}
+                {{ field(class_="form-control") }}
+
+                {% for error in field.errors %}
+                <span class="form-text text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
+            <!-- <p>
+                {{ field.label }}
+                {{ field(class_="form-control") }}
+
+                {% for error in field.errors %}
+                <span class="form-text text-danger">{{ error }}</span>
+                {% endfor %}
+            </p> -->
+            {% endfor %}
+
+            <button class="btn btn-success" type="submit">Add</button>
+            <a href="/convert_unit">Go back</a>
+        </form>   
+    </div> 
+</div>
+
+
+{% endblock %}
